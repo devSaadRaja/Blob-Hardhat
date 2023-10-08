@@ -13,7 +13,7 @@
     - custom reward formula (1x - 2x)
     - slippage tolerance
 - *Staking*
-    - 2 rewards; WETH ad sBlob
+    - 2 rewards: WETH and sBlob
     - sBlob not transferable other than to/from Staking
     - can have multiple staking instances
     - WETH rewards after every epoch
