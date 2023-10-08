@@ -9,7 +9,7 @@ const formatEth = (wei) => Number(ethers.utils.formatEther(String(wei)));
 
 describe("Feeding", function () {
   let owner, user;
-  let meme, blob, USDC, feeding, mockUniswapRouter, mockAggregator, priceOracle;
+  let meme, blob, USDC, feeding, mockUniswapRouter, mockAggregator;
   let feedPoolRewardThreshold, baseGrowthRate, growthRateIncrease;
   let amountIn, vestingTime, feedPoolValue, slippage;
 
@@ -37,7 +37,6 @@ describe("Feeding", function () {
     const USDCToken = await ethers.getContractFactory("USDC");
     USDC = await USDCToken.deploy();
 
-    // address private constant UNISWAP_V2_ROUTER = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D; // Uniswap V2 Router address
     const MockUniswapRouter = await ethers.getContractFactory(
       "MockUniswapRouter"
     );

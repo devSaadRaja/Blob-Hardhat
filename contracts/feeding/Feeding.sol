@@ -35,6 +35,7 @@ contract Feeding is Ownable {
 
     mapping(address => address[]) public tokenPath; // feedtoken -> BLOB
     mapping(address => uint256) public totalFed; // total tokens fed
+    mapping(address => bool) public isFeedToken;
     address[] feedTokensList;
     uint256 public totalBlobGiven;
 
@@ -47,6 +48,11 @@ contract Feeding is Ownable {
     event RemoveFeedToken(address _token);
     event Feed(address _token, uint256 _amount);
     event Claim(uint256 _amount);
+    event SetRouterAddress(address _routerAddress);
+    event SetRewardsAddress(address _rewardAddress);
+    event SetRewardsThreshold(uint256 _threshold);
+    event SetGrowthRatesIncrease(uint256 _growthRate);
+    event SetBaseGrowthRate(uint256 _baseGrowthRate);
 
     // ==================== MODIFIERS ==================== //
 
@@ -73,6 +79,7 @@ contract Feeding is Ownable {
         feedPoolRewardThreshold = _feedPoolRewardThreshold;
         baseGrowthRate = _baseGrowthRate;
         growthRateIncrease = _growthRateIncrease;
+        tokenPath[WETH] = [WETH, BLOB];
     }
 
     // ==================== FUNCTIONS ==================== //
@@ -81,6 +88,7 @@ contract Feeding is Ownable {
     function setBLOB(address blob) external onlyOwner isValidAddress(blob) {
         BLOB = blob;
     }
+
     // ..................................................
 
     /**
@@ -127,6 +135,7 @@ contract Feeding is Ownable {
         address _routerAddress
     ) external onlyOwner isValidAddress(_routerAddress) {
         routerAddress = _routerAddress;
+        emit SetRouterAddress(_routerAddress);
     }
 
     /**
@@ -137,6 +146,8 @@ contract Feeding is Ownable {
         address _rewardAddress
     ) external onlyOwner isValidAddress(_rewardAddress) {
         WETH = _rewardAddress;
+        tokenPath[WETH] = [WETH, BLOB];
+        emit SetRewardsAddress(_rewardAddress);
     }
 
     /**
@@ -146,6 +157,7 @@ contract Feeding is Ownable {
     function setRewardThreshold(uint256 _threshold) external onlyOwner {
         require(_threshold > 0, "Value must be greater than 0");
         feedPoolRewardThreshold = _threshold;
+        emit SetRewardsThreshold(_threshold);
     }
 
     /**
@@ -155,6 +167,7 @@ contract Feeding is Ownable {
     function setGrowthRateIncrease(uint256 _growthRate) external onlyOwner {
         require(_growthRate > 0, "Value must be greater than 0");
         growthRateIncrease = _growthRate;
+        emit SetGrowthRatesIncrease(_growthRate);
     }
 
     /**
@@ -164,6 +177,7 @@ contract Feeding is Ownable {
     function setBaseGrowthRate(uint256 _baseGrowthRate) external onlyOwner {
         require(_baseGrowthRate > 1e18, "Value must be greater than 1");
         baseGrowthRate = _baseGrowthRate;
+        emit SetBaseGrowthRate(_baseGrowthRate);
     }
 
     /**
@@ -181,6 +195,7 @@ contract Feeding is Ownable {
      */
     function addFeedToken(address _token) external onlyOwner {
         feedTokensList.push(_token);
+        isFeedToken[_token] = true;
         emit AddFeedToken(_token);
     }
 
@@ -193,7 +208,7 @@ contract Feeding is Ownable {
         address _token = feedTokensList[_index];
         feedTokensList[_index] = feedTokensList[feedTokensList.length - 1];
         feedTokensList.pop();
-
+        isFeedToken[_token] = false;
         emit RemoveFeedToken(_token);
     }
 
@@ -225,6 +240,8 @@ contract Feeding is Ownable {
         uint256 _slippage,
         uint256 _vestingTime
     ) external {
+        require(isFeedToken[_tokenIn], "Token is not available for feeding.");
+
         require(
             _vestingTime >= 1e18 && _vestingTime <= 7e18,
             "Vesting must be between 1 to 7"
